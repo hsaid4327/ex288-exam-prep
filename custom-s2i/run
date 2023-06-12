@@ -1,0 +1,3 @@
+echo "before running the script....."
+
+ exec /usr/libexec/s2i/run
