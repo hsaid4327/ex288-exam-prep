@@ -1,0 +1,99 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: ${NAME} 
+  template: busybox-example 
+message: |-
+  The following service(s) have been created in your project: ${NAMESPACE}.
+
+  For more information about using this template, including OpenShift considerations, see https://github.com/sclorg/httpd-ex/blob/master/README.md.
+metadata:
+  annotations:
+    description: busybox example 
+    iconClass: icon-apache
+    openshift.io/display-name: busybox example 
+    tags: quickstart,httpd
+  labels:
+    samples.operator.openshift.io/managed: "true"
+  name: busybox-example 
+objects:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app: ${NAME}
+      app.kubernetes.io/component: ${NAME}
+      app.kubernetes.io/instance:  ${NAME}
+    name: ${NAME}
+  spec:
+    tags:
+    - from:
+        kind: DockerImage
+        name: ${IMAGE} 
+      name: ${TAG}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+    labels:
+      app: ${NAME}
+      app.kubernetes.io/component: ${NAME}
+      app.kubernetes.io/instance: ${NAME}
+    name: ${NAME}
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        deployment:  ${NAME} 
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          deployment: ${NAME}
+      spec:
+        containers:
+        - command:
+          - /bin/sh
+          - -c
+          - while true; do echo Writing env variables; env;sleep 10; done
+          env:
+          - name: VAR1
+            value: value1
+          - name: VAR2
+            value: value2
+          image: ${NAME}
+          imagePullPolicy: IfNotPresent
+          name: ${NAME}
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+parameters:
+- description: The name assigned to all of the frontend objects defined in this template.
+  displayName: Name
+  name: NAME
+  required: true
+  
+- description: The OpenShift Namespace where the ImageStream resides.
+  displayName: Namespace
+  name: NAMESPACE
+  required: true
+- description: Image name
+  displayName: Image name
+  name: IMAGE 
+  required: true
+- description: Image tag
+  displayName: Image tag
+  name: TAG
+  required: true
+  value: latest
